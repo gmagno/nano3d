@@ -1,0 +1,6 @@
+[submodule "ext/polytri"]
+	path = ext/polytri
+	url = https://github.com/gmagno/polytri.git
+[submodule "ext/nanogui"]
+	path = ext/nanogui
+	url = https://github.com/wjakob/nanogui.git
