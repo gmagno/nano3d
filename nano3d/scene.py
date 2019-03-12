@@ -42,14 +42,6 @@ class Scene():
     def add_node(self, node):
         self.nodes.append(node)
 
-    # def add_camera(self):
-    #     pass
-
-    # def add_light(self):
-    #     pass
-
-    # def add_mesh(self):
-    #     pass
 
 class Node():
     '''The Node object maintains the position, orientation and scaling factor of
@@ -161,7 +153,7 @@ class Node():
 
     def rotate(self, pitch, yaw, roll):
         rot = qua.from_rotation_vector((pitch, yaw, roll))
-        self.orientation *= self.orientation
+        self.orientation *= rot
 
 
 class CameraNode(Node):
@@ -171,11 +163,10 @@ class CameraNode(Node):
 
     def view_mat(self):
         '''Returns the view matrix for this camera node.'''
-        self.view = np.eye(4)
-
         trans = self.translation_mat()
-        trans[:-1, 3] = -trans[:-1, 3]
+        trans[:-1, 3] = -trans[:-1, 3]  # <-- efficient matrix inversion
         rot = self.rotation_mat()
+        rot = rot.T                     # <-- efficient matrix inversion
 
         self.view = rot @ trans
         return self.view
@@ -226,7 +217,8 @@ class CameraNode(Node):
             projh = projw / aspect
 
         left, right, bottom, top = -projw/2., projw/2., -projh/2., projh/2.
-        near, far = -5, 5  # TODO: should be determined by some camera parameter
+        # near, far = 0, 5  # TODO: should be determined by some camera parameter
+        near, far = self.camera.near, self.camera.far  # TODO: should be determined by some camera parameter
         tx = -(right+left)/(right-left)
         ty = -(top+bottom)/(top-bottom)
         tz = -(far+near)/(far-near)
@@ -301,11 +293,11 @@ class CameraFPSNode(CameraNode):
 
     def rotate_in_xx(self, pitch):
         rot = qua.from_rotation_vector((pitch, 0.0, 0.0))
-        self.orientation = rot * self.orientation
+        self.orientation *= rot
 
     def rotate_in_yy(self, yaw):
         rot = qua.from_rotation_vector((0.0, yaw, 0.0))
-        self.orientation *= rot
+        self.orientation = rot * self.orientation  # <- experiment...
 
     def move_frwd(self, amount):
         frwd = -amount*self.rotation_mat()[2, :-1]
@@ -323,98 +315,3 @@ class CameraFPSNode(CameraNode):
 
 class LightNode(Node):
     pass
-
-
-# class Scene_old():
-#     def __init__(self):
-#         '''Creates the scene objects.'''
-#         self.objects = []
-
-#         light_pos = (0., 5., 3.)
-#         light_amb_color = (0.1, 0.0, 0.0)
-#         light_diff_color = (0.8, 0.8, 0.8)
-
-#         # light source
-#         icosphere = ColladaObj('data/primitives/icosphere_s0.5.dae')
-#         icosphere.lambcolor = (1.0, 1.0, 1.0)
-#         icosphere.ldiffcolor = (1.0, 1.0, 1.0)
-#         icosphere_pos = light_pos
-#         self.add_object(icosphere, ng.translate(icosphere_pos))
-
-#         # floor grid
-#         grid = Grid()
-#         grid.n = 50
-#         self.add_object(grid)
-
-#         # reference axes
-#         self.add_object(Axes())
-
-#         # simple cube
-#         # cube_pos = (6.0, 0.0, 3.0)
-#         # self.add_object(Cube(), ng.translate(cube_pos))
-
-#         # planes
-#         # for i in range(-40, 40, 10):
-#         #     for j in range(-40, 40, 10):
-#         #         plane = ColladaObj('data/primitives/plane.dae')
-#         #         plane.lambcolor = light_amb_color
-#         #         plane.ldiffcolor = light_diff_color
-#         #         plane_pos = (i, j, -40.0)
-#         #         plane.ldir = np.array(plane_pos) - np.array(light_pos)
-#         #         self.add_object(plane, ng.translate(plane_pos))
-
-#         # spheres
-#         # for i in range(-20, 20, 5):
-#         #     icosphere = ColladaObj('data/primitives/icosphere5.dae')
-#         #     icosphere.lambcolor = light_amb_color
-#         #     icosphere.ldiffcolor = light_diff_color
-#         #     icosphere_pos = (i, 2.0, -4.0)
-#         #     icosphere.ldir = np.array(icosphere_pos) - np.array(light_pos)
-#         #     self.add_object(icosphere, ng.translate(icosphere_pos))
-
-#         # a more complex object
-#         # monkey = ColladaObj('data/primitives/monkey.dae')
-#         # monkey.lambcolor = light_amb_color
-#         # monkey.ldiffcolor = light_diff_color
-#         # monkey_pos = (8.0, 10.0, 25.0)
-#         # self.add_object(
-#         #     monkey,
-#         #     ng.translate(monkey_pos)
-#         # )
-
-#         # room
-#         room = Room()
-#         cosya = np.cos(np.pi)
-#         sinya = np.sin(np.pi)
-#         yrot = np.array([
-#             [ cosya,  0.0,    sinya,   0.0 ],
-#             [ 0.0,    1.0,    0.0,     0.0 ],
-#             [-sinya,  0.0,    cosya,   0.0 ],
-#             [ 0.0,    0.0,    0.0,     1.0 ]
-#         ])
-#         cosxa = np.cos(-np.pi/2)
-#         sinxa = np.sin(-np.pi/2)
-#         xrot = np.array([
-#             [ 1.0,    0.0,     0.0,     0.0 ],
-#             [ 0.0,    cosxa,  -sinxa,   0.0 ],
-#             [ 0.0,    sinxa,   cosxa,   0.0 ],
-#             [ 0.0,    0.0,     0.0,     1.0 ],
-#         ])
-
-#         self.add_object(room, model=yrot @ xrot)
-#         # self.add_object(room)
-
-
-#     def add_object(self, obj, model=np.eye(4)):
-#         '''Adds an object to the list of objects to be rendered, where `obj` is
-#         an instance of GLPrimitive, and model is a 4d np.array with the model
-#         transformation matrix.
-#         '''
-#         self.objects.append((obj, model))
-#         obj.setup()
-#         return len(self.objects) - 1
-
-#     def draw(self, view, projection):
-#         '''Loops through the list of objects and calls their .draw() method.'''
-#         for obj, model in self.objects:
-#             obj.draw(model, view, projection)
