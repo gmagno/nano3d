@@ -129,9 +129,9 @@ class Grid(Mesh):
         self.indices = indices.T
 
         colors = np.zeros((n*4+4, 4), dtype=np.float32)
-        colors[:, 0] = 0.5*np.ones(n*4+4)
-        colors[:, 1] = 0.5*np.ones(n*4+4)
-        colors[:, 2] = 0.5*np.ones(n*4+4)
-        colors[:, 3] = 0.5*np.ones(n*4+4)
+        colors[:, 0] = 0.3*np.ones(n*4+4)
+        colors[:, 1] = 0.3*np.ones(n*4+4)
+        colors[:, 2] = 0.3*np.ones(n*4+4)
+        colors[:, 3] = 0.3*np.ones(n*4+4)
         self.colors = colors.T
         self.no_indices = self.indices.shape[1]
