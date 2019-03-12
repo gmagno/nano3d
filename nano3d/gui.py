@@ -15,6 +15,10 @@ class MainScreen(ng.Screen):
             True,               # resizable (boolean)
             False               # fullscreen (boolean)
         )
+        # initialize handlers
+        self.screen_resize_handler = lambda size: None
+
+        # screen properties
         self.setBackground(ng.Color(0.12, 0.10, 0.10, 0.1))
 
         # screen
@@ -60,6 +64,8 @@ class MainScreen(ng.Screen):
         self.topview_canvas.setBackgroundColor(ng.Color(0.10, 0.12, 0.10, 0.1))
         self.sideview_canvas.setBackgroundColor(ng.Color(0.10, 0.10, 0.12, 0.1))
 
+        self.resizeEvent((self.width(), self.height()))
+
     ##  Draw handling  ################
     def reg_screen_draw_handler(self, handler):
         self.screen_draw_handler = handler
@@ -86,7 +92,14 @@ class MainScreen(ng.Screen):
 
     def resizeEvent(self, size):
         w, h = size
-        # self.win.setSize((w/8, h))
+        camwin_w = self.cam_win.width()
+        camwin_h = self.cam_win.height()
+        refwin_w = self.ref_win.width()
+        refwin_h = self.ref_win.height()
+
+        self.ortho_win.setPosition((0, 0))
+        self.cam_win.setPosition((w-camwin_w-2, 0))
+        self.ref_win.setPosition((w-camwin_w-refwin_w-4, 0))
         self.topview_panel.setSize(np.array([w/5, h/2-20], dtype=np.int32))
         self.sideview_panel.setSize(np.array([w/5, h/2-20], dtype=np.int32))
         self.topview_canvas.set_size(self.topview_panel.size())
@@ -125,6 +138,7 @@ class RACanvas(ng.GLCanvas):
         self.size = np.array(size)
         self.setSize(size)
         self.setBackgroundColor(ng.Color(0.3, 0.3, 0.3, 1.0))
+        self.resize_handler = lambda size: None
 
     def set_size(self, size):
         self.setSize(size)
