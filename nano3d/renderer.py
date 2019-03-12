@@ -42,13 +42,10 @@ class Renderer():
         self.camera_node = None
         self.shaders = []
         self.projection = np.eye(4)
-        # self.view = np.eye(4)
-        # self.view[2, -1] = -3
 
         for node in scene.nodes:
             if node.name == self.camera_name:
                 self.camera_node = node
-                # self.update_projection()
                 self.projection = self.camera_node.projection_mat(size=(1, 1))
             if node.mesh is None:
                 continue  # may be a node without geometry, which is okay
@@ -85,8 +82,6 @@ class Renderer():
             self.shaders[i].drawIndexed(ng.gl.LINES, 0, node.mesh.no_indices)
             ng.gl.Disable(ng.gl.CULL_FACE)
             ng.gl.Disable(ng.gl.DEPTH_TEST)
-
-
 
     def resize_handler(self, size):
         '''Callback that gets called when the rendering canvas is resized'''
