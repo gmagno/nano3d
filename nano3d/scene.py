@@ -71,6 +71,7 @@ class Node():
             can be generated with `qua.as_rotation_matrix(rot)`.
         position: a 3-tuple of numpy.ndarray representing the position of the
             node in world coordinates.
+        visible: a boolean for whether the node should be rendered.
 
         Raises
         ------
@@ -87,6 +88,7 @@ class Node():
         self.position = position
         self.orientation = orientation
         self.scale = scale
+        self.visible = True  # whether this node is visible for rendering
 
     @property
     def position(self):
@@ -297,15 +299,16 @@ class CameraFPSNode(CameraNode):
 
     def rotate_in_yy(self, yaw):
         rot = qua.from_rotation_vector((0.0, yaw, 0.0))
-        self.orientation = rot * self.orientation  # <- experiment...
+        self.orientation = rot * self.orientation
 
     def move_frwd(self, amount):
-        frwd = -amount*self.rotation_mat()[2, :-1]
+        frwd = -amount*self.view_mat()[2, :-1]
         frwd[1] = 0.0
         self.position += frwd
 
+
     def move_right(self, amount):
-        right = amount*self.rotation_mat()[0, :-1]
+        right = amount*self.view_mat()[0, :-1]
         right[1] = 0.0
         self.position += right
 
