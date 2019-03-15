@@ -17,6 +17,7 @@ class MainScreen(ng.Screen):
         )
         # initialize handlers
         self.screen_resize_handler = lambda size: None
+        self.mouse_motion_handler = lambda pos, rel, button, modifiers: None
 
         # screen properties
         self.setBackground(ng.Color(0.12, 0.10, 0.10, 0.1))
@@ -36,10 +37,12 @@ class MainScreen(ng.Screen):
         self.topview_panel = ng.Widget(self.ortho_win)
         self.sideview_panel = ng.Widget(self.ortho_win)
 
+        # Scene Nodes Panel
+        self.scenenodes = SceneNodes(self)
+
         # camera window
         self.cam_win = ng.Window(self, 'Camera')
         self.cam_win.setLayout(ng.GroupLayout())
-        self.cam_win.setSize((100, 100))
         self.camview_label = MatrixLabel(self.cam_win, caption='View Matrix')
         self.camrot_label = MatrixLabel(self.cam_win, caption='Rotation Matrix')
         self.camtra_label = MatrixLabel(self.cam_win, caption='Translation Matrix')
@@ -138,6 +141,7 @@ class RACanvas(ng.GLCanvas):
         self.size = np.array(size)
         self.setSize(size)
         self.setBackgroundColor(ng.Color(0.3, 0.3, 0.3, 1.0))
+        self.draw_handler = lambda : None
         self.resize_handler = lambda size: None
 
     def set_size(self, size):
@@ -182,3 +186,36 @@ class MatrixLabel(ng.Widget):
             self.labels.append(ng.Label(
                 self, fmtline, fontSize=int(0.9*self.font_size)
             ))
+
+
+class SceneNodes(ng.Window):
+    def __init__(self, parent, *args, **kwargs):
+        super(SceneNodes, self).__init__(parent, 'Scene Nodes', *args, **kwargs)
+        self.scene = None
+        self.vscroll = None
+
+    def load_scene(self, scene):
+        if self.vscroll != None:
+            # remove existing vscroll
+            # ...
+            self.vscroll = None
+        self.scene = scene
+        self.setLayout(ng.GroupLayout())
+        vscroll = ng.VScrollPanel(self)
+        vscroll.setFixedSize((300, 800))
+        p = ng.Widget(vscroll)
+        p.setLayout(ng.GroupLayout())
+        for node in self.scene.nodes:
+            l = ng.Label(p, node.name, 'sans-bold', fontSize=30)
+
+            def cb(state, nd):
+                nd.visible = state
+            cbl = lambda state, nd=node: cb(state, nd)
+
+            chb = ng.CheckBox(p, "Visible", cbl)
+            chb.setChecked(True)
+
+    def set_size(self, size):
+        if self.vscroll:
+            self.vscroll.setFixedSize(size)
+
