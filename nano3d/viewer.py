@@ -1,5 +1,6 @@
 
 import gc
+import time
 
 import nanogui as ng
 import numpy as np
@@ -7,7 +8,7 @@ import numpy as np
 from nano3d.camera import CameraOrtho, CameraPerspective
 from nano3d.renderer import RendererManager
 from nano3d.scene import CameraFPSNode, CameraNode, Node, Scene, SceneManager
-from nano3d.mesh import Axes, CubeWired, Grid
+from nano3d.mesh import Axes, CubeWired, Dae, Grid
 from nano3d.gui import MainScreen, RACanvas
 
 
@@ -63,10 +64,14 @@ class Viewer():
         axes_node = Node('axes', axes_mesh)
         scene.add_node(axes_node)
 
-        # ref_mesh = Axes()
-        # self.ref_node = Node('ref', ref_mesh)
-        # self.ref_node.position = (2, 1, -10)
+        # self.ref_node = Node('ref', axes_mesh)
+        # self.ref_node.position = (8, 1, -10)
         # scene.add_node(self.ref_node)
+
+        # dae_mesh = Dae('data/primitives/cube1.dae')
+        # dae_node = Node('dae', dae_mesh)
+        # scene.add_node(dae_node)
+
 
         grid_mesh = Grid(100)
         grid_node = Node('grid', grid_mesh, position=(0.0, 0.0, 0.0))
@@ -101,6 +106,8 @@ class Viewer():
         self.camnode_side.position = self.camnode_screen.position
         self.camnode_side.rotate(pitch=0.0, yaw=np.pi/2, roll=0.0)
         scene.add_node(self.camnode_side)
+
+        self.screen.scenenodes.load_scene(scene)
 
         return scene
 
@@ -137,6 +144,16 @@ class Viewer():
         if key == ng.glfw.KEY_K and action == ng.glfw.PRESS:
             self.camnode_screen.rotate_in_xx(-np.pi/16.)
 
+        if key == ng.glfw.KEY_LEFT and action == ng.glfw.PRESS:
+            self.ref_node.rotate(pitch=0.0, yaw=np.pi/16., roll=0.0)
+        if key == ng.glfw.KEY_RIGHT and action == ng.glfw.PRESS:
+            self.ref_node.rotate(pitch=0.0, yaw=-np.pi/16., roll=0.0)
+        if key == ng.glfw.KEY_UP and action == ng.glfw.PRESS:
+            self.ref_node.rotate(pitch=np.pi/16, yaw=0.0, roll=0.0)
+        if key == ng.glfw.KEY_DOWN and action == ng.glfw.PRESS:
+            self.ref_node.rotate(pitch=-np.pi/16, yaw=0.0, roll=0.0)
+
+
         self.camnode_top.position = self.camnode_screen.position
         self.camnode_side.position = self.camnode_screen.position
 
@@ -146,6 +163,11 @@ class Viewer():
         self.screen.camview_label.set_array(camview_m)
         self.screen.camrot_label.set_array(camrot_m)
         self.screen.camtra_label.set_array(camtra_m)
+
+        # refrot_m = np.around(self.ref_node.rotation_mat(), decimals=1)
+        # reftra_m = np.around(self.ref_node.translation_mat(), decimals=1)
+        # self.screen.refrot_label.set_array(refrot_m)
+        # self.screen.reftra_label.set_array(reftra_m)
 
         self.screen.performLayout()
         return True
@@ -167,10 +189,22 @@ class Viewer():
         gc.collect()
         ng.shutdown()
 
-def main():
+def run():
+    with Viewer() as viewer:
+        viewer.start()
 
-    with Viewer() as raui:
-        raui.start()
+def run_detached():
+    viewer = Viewer()
+    time.sleep(2)  # <-- otherwise I get a SIGSEGV: address boundary error
+    h = ng.mainloop(detach=viewer.screen)
+    h.join()
+    viewer = None
+    gc.collect()
+    ng.shutdown()
+
+def main():
+    run()
+    # run_detached()
 
 if __name__ == '__main__':
     main()
