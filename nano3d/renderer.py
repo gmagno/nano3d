@@ -2,6 +2,7 @@
 import nanogui as ng
 import numpy as np
 
+from nano3d.mesh import Primitive
 
 class RendererManager():
 
@@ -42,23 +43,32 @@ class Renderer():
         self.camera_node = None
         self.shaders = []
         self.projection = np.eye(4)
+        self.primitives = {
+            Primitive.POINTS : ng.gl.POINTS,
+            Primitive.LINES: ng.gl.LINES,
+            Primitive.TRIANGLES: ng.gl.TRIANGLES
+        }
 
         for node in scene.nodes:
             if node.name == self.camera_name:
                 self.camera_node = node
-                self.projection = self.camera_node.projection_mat(size=(1, 1))
+                # self.projection = self.camera_node.projection_mat(size=(1, 1))
             if node.mesh is None:
                 continue  # may be a node without geometry, which is okay
-            shader = ng.GLShader()
-            shader.initFromFiles(
-                'generic',
+            node.mesh.material.load_shaders(
                 'data/shaders/generic.vs.glsl',
-                'data/shaders/generic.fs.glsl',
+                'data/shaders/generic.fs.glsl'
+            )
+            shader = ng.GLShader()
+            shader.init(
+                node.mesh.material.name,
+                node.mesh.material.vsh,
+                node.mesh.material.fsh,
             )
             shader.bind()
             shader.uploadIndices(node.mesh.indices)
-            shader.uploadAttrib('position', node.mesh.positions)
-            shader.uploadAttrib('color', node.mesh.colors)
+            for key in node.mesh.attribs:
+                shader.uploadAttrib(key, node.mesh.attribs[key])
             self.shaders.append(shader)
         if self.camera_node == None:
             # the specified camera does not match any of the available cameras
@@ -68,18 +78,25 @@ class Renderer():
     def draw_handler(self):
         '''Callback that gets called when rendering is needed'''
         for i, node in enumerate(self.scene.nodes):
-            if node.mesh is None:
-                continue  # may be a node without geometry, which is okay
+            if node.mesh is None or not node.visible:
+                # may be a node without geometry, or invisible
+                continue
             model = node.model_mat()
             view = self.camera_node.view_mat()
             positions = node.mesh.positions
             self.shaders[i].bind()
+            for key in node.mesh.uniforms:
+                self.shaders[i].setUniform(key, node.mesh.uniforms[key])
             self.shaders[i].setUniform(
                 'mvp', self.projection @ view @ model
             )
             ng.gl.Enable(ng.gl.DEPTH_TEST)
             ng.gl.Enable(ng.gl.CULL_FACE)
-            self.shaders[i].drawIndexed(ng.gl.LINES, 0, node.mesh.no_indices)
+            self.shaders[i].drawIndexed(
+                self.primitives[node.mesh.primitive],
+                0,
+                node.mesh.no_indices
+            )
             ng.gl.Disable(ng.gl.CULL_FACE)
             ng.gl.Disable(ng.gl.DEPTH_TEST)
 
