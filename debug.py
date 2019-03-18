@@ -7,7 +7,7 @@ print('Working dir: {}'.format(os.getcwd()))
 print('sys.path:')
 pprint(sys.path)
 
-from nano3d.viewer import main
+from example.example1.main import main
 
 main()
 
