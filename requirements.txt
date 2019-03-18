@@ -1,0 +1,5 @@
+numpy==1.16.2
+numpy-quaternion==2019.3.8.14.16.10
+pycollada==0.6
+python-dateutil==2.8.0
+six==1.12.0
