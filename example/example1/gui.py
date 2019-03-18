@@ -2,7 +2,6 @@
 import nanogui as ng
 import numpy as np
 
-from nano3d.globj import Axes, Cube, Grid
 from nano3d.scene import Scene
 
 
