@@ -44,7 +44,7 @@ class Renderer():
         self.shaders = []
         self.projection = np.eye(4)
         self.primitives = {
-            Primitive.POINTS : ng.gl.POINTS,
+            Primitive.POINTS: ng.gl.POINTS,
             Primitive.LINES: ng.gl.LINES,
             Primitive.TRIANGLES: ng.gl.TRIANGLES
         }
@@ -52,13 +52,8 @@ class Renderer():
         for node in scene.nodes:
             if node.name == self.camera_name:
                 self.camera_node = node
-                # self.projection = self.camera_node.projection_mat(size=(1, 1))
             if node.mesh is None:
                 continue  # may be a node without geometry, which is okay
-            node.mesh.material.load_shaders(
-                'data/shaders/generic.vs.glsl',
-                'data/shaders/generic.fs.glsl'
-            )
             shader = ng.GLShader()
             shader.init(
                 node.mesh.material.name,
