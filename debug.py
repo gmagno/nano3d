@@ -7,7 +7,7 @@ print('Working dir: {}'.format(os.getcwd()))
 print('sys.path:')
 pprint(sys.path)
 
-from example.example1.main import main
+from example.example_ra.main import main
 
 main()
 
