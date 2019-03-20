@@ -156,3 +156,95 @@ class Grid(Mesh):
         self.material = Material('grid-material')
         self.attribs = { 'position': self.positions, 'color': self.colors }
         self.uniforms = {}
+
+
+
+class Dae(Mesh):
+    def __init__(self, daefile):
+        '''Instantiates a Mesh from a collada file (.dae)
+
+        Parameters
+        ----------
+        daefile: the path to the collada file, e.g: /path/to/obj3d.dae
+        '''
+        super(Mesh, self).__init__()
+        self.daefile = daefile
+        mesh = co.Collada(self._daefile)
+
+        self.positions = np.array([], dtype=np.float32)
+        self.indices = np.array([], dtype=np.int32)
+        self.normals = np.array([], dtype=np.float32)
+        # self.colors = np.array([], dtype=np.float32)
+
+
+        self.objects = []
+        for g in mesh.scene.objects('geometry'):
+            # print('g: ', g)
+            for triset in g.primitives():
+                # print('\ttriset: ', triset)
+                if type(triset) == co.lineset.BoundLineSet:
+                    # print('triset: ', type(triset))
+                    continue
+                normal = np.zeros(triset.vertex.shape)
+                for i, tri in enumerate(triset.vertex_index):
+                    normal[tri] = triset.normal[triset.normal_index[i]]
+                o = {
+                    'positions': triset.vertex,
+                    'normals': normal,
+                    'indices': triset.vertex_index
+                }
+                self.objects.append(o)
+
+        for o in self.objects:
+            self.indices = np.concatenate((
+                self.indices.flatten(),
+                (o['indices'] + self.positions.shape[0]).flatten()
+            )).reshape(-1, 3)
+            self.positions = np.concatenate((
+                self.positions.flatten(),
+                o['positions'].flatten()
+            )).reshape(-1, 3)
+            self.normals = np.concatenate((
+                self.normals.flatten(),
+                o['normals'].flatten()
+            )).reshape(-1, 3)
+
+        self.no_indices = self.indices.shape[0]
+
+        self.positions = self.positions.T
+        self.indices = self.indices.T
+        self.normals = self.normals.T
+        # self.colors = np.ones(self.positions.shape)
+
+        self.material = Material('dae-material')
+        self.material.load_shaders(
+            'data/shaders/flat.vs.glsl',
+            'data/shaders/flat.fs.glsl',
+        )
+        self.attribs = {
+            'position': self.positions,
+            # 'color': self.colors,
+            'normal': self.normals
+        }
+        ldir = np.array([0.0, 1.0, 0.0])
+        self.uniforms = {
+            'lAmbColor': np.array([0.2, 0.2, 0.0]),
+            'lDiffColor': np.array([0.7, 0.7, 0.0]),
+            'lDirection':  ldir/np.linalg.norm(ldir),
+        }
+        self.primitive = Primitive.TRIANGLES
+
+
+
+    @property
+    def daefile(self):
+        return self._daefile
+
+    @daefile.setter
+    def daefile(self, filename):
+        f = Path(filename)
+        if not f.is_file():
+            raise FileNotFoundError(
+                errno.ENOENT, os.strerror(errno.ENOENT), filename
+            )
+        self._daefile = filename
