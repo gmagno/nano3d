@@ -1,5 +1,7 @@
 
 from enum import Enum
+import errno
+import os
 from pathlib import Path
 
 import collada as co
@@ -158,6 +160,28 @@ class Grid(Mesh):
         self.uniforms = {}
 
 
+class Line(Mesh):
+    def __init__(self, positions, colors=[(1, 1, 1, 1),]):
+        super(Mesh, self).__init__()
+        self.positions = positions
+        self.indices = np.zeros((self.positions.shape[0] - 1, 2))
+        self.indices[:, 0] = np.arange(0, self.indices.shape[0])
+        self.indices[:, 1] = np.arange(1, self.indices.shape[0] + 1)
+        self.colors = colors
+        if self.colors.shape[0] < self.positions.shape[0]:
+            tmp = self.colors
+            self.colors = np.zeros((self.positions.shape))
+            self.colors[:tmp.shape[0], :] = tmp
+            self.colors[tmp.shape[0]:, :] = tmp[-1, :]
+        self.positions = self.positions.T
+        self.indices = self.indices.T
+        self.colors = self.colors.T
+        self.no_indices = self.indices.shape[1]
+        self.attribs = { 'position': self.positions, 'color': self.colors }
+        self.uniforms = {}
+        self.primitive = Primitive.LINES
+        self.material = Material('line-material')
+
 
 class Dae(Mesh):
     def __init__(self, daefile):
@@ -179,11 +203,9 @@ class Dae(Mesh):
 
         self.objects = []
         for g in mesh.scene.objects('geometry'):
-            # print('g: ', g)
             for triset in g.primitives():
-                # print('\ttriset: ', triset)
-                if type(triset) == co.lineset.BoundLineSet:
-                    # print('triset: ', type(triset))
+                if type(triset) != co.triangleset.BoundTriangleSet:
+                    # ignore everything that is not a triangle
                     continue
                 normal = np.zeros(triset.vertex.shape)
                 for i, tri in enumerate(triset.vertex_index):
@@ -226,15 +248,13 @@ class Dae(Mesh):
             # 'color': self.colors,
             'normal': self.normals
         }
-        ldir = np.array([0.0, 1.0, 0.0])
+        ldir = np.array([-1.0, -2.0, -3.0])
         self.uniforms = {
-            'lAmbColor': np.array([0.2, 0.2, 0.0]),
-            'lDiffColor': np.array([0.7, 0.7, 0.0]),
+            'lAmbColor': np.array([0.1, 0.1, 0.1]),
+            'lDiffColor': np.array([0.3, 0.3, 0.3]),
             'lDirection':  ldir/np.linalg.norm(ldir),
         }
         self.primitive = Primitive.TRIANGLES
-
-
 
     @property
     def daefile(self):
