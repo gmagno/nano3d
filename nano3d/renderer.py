@@ -86,13 +86,13 @@ class Renderer():
                 'mvp', self.projection @ view @ model
             )
             ng.gl.Enable(ng.gl.DEPTH_TEST)
-            ng.gl.Enable(ng.gl.CULL_FACE)
+            # ng.gl.Enable(ng.gl.CULL_FACE)
             self.shaders[i].drawIndexed(
                 self.primitives[node.mesh.primitive],
                 0,
                 node.mesh.no_indices
             )
-            ng.gl.Disable(ng.gl.CULL_FACE)
+            # ng.gl.Disable(ng.gl.CULL_FACE)
             ng.gl.Disable(ng.gl.DEPTH_TEST)
 
     def resize_handler(self, size):
