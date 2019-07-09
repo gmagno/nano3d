@@ -1,4 +1,6 @@
 
+import os
+import errno
 from pathlib import Path
 
 class Material():
@@ -29,7 +31,7 @@ class Material():
             f = Path(path)
             if not f.is_file():
                 raise FileNotFoundError(
-                    errno.ENOENT, os.strerror(errno.ENOENT), filename
+                    errno.ENOENT, os.strerror(errno.ENOENT), path
                 )
         with open(vsh_path, 'r') as f:
             self.vsh = f.read()
